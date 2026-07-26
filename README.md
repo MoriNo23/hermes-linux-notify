@@ -92,6 +92,24 @@ timeouts, edit the constants in `__init__.py` and `notify.py` directly.
 *El texto de la notificación y el comportamiento de fallback están fijos. Para cambiar
 el mensaje o los tiempos, edita las constantes en `__init__.py` y `notify.py` directamente.*
 
+The key-click sound is configured via the optional `config` block in `plugin.yaml`:
+
+*El sonido de tecla se configura con el bloque opcional `config` en `plugin.yaml`:*
+
+```yaml
+config:
+  sound_enabled: true     # false disables the key-click
+  sound_path: ""          # empty = bundled sounds/keyclick.wav; or ~/ruta/click.wav
+  sound_volume: 100       # 0-100, only applied when using paplay
+```
+
+If no audio player (`paplay`/`aplay`) is found, the plugin emits a terminal bell
+(`\a`) as fallback. The sound plays on a background thread so it never delays the
+notification.
+*Si no hay reproductor (`paplay`/`aplay`), el plugin emite una campana de terminal
+(`\a`) como fallback. El sonido se reproduce en un hilo aparte y no retrasa la
+notificación.*
+
 ---
 
 ## Troubleshooting / Solución de problemas

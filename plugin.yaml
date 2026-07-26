@@ -5,3 +5,9 @@ author: opencode
 kind: standalone
 hooks:
   - post_llm_call
+
+# Optional config (read by the plugin itself, ignored by Hermes core)
+config:
+  sound_enabled: true        # set false to disable the key-click
+  sound_path: ""              # empty = use bundled sounds/keyclick.wav
+  sound_volume: 100           # 0-100, applied only with paplay
