@@ -25,15 +25,12 @@
 - One of these notification daemons:
   - `libnotify` (`notify-send`) – works with GNOME, KDE, XFCE, etc.
   - `dunst` – lightweight notification daemon (optional fallback)
-- For window focusing (optional):
-  - `wmctrl` or `xdotool`
 
 ### Install dependencies / Instalar dependencias
 ```bash
 # Debian/Ubuntu / Debian-based
 sudo apt install libnotify-bin   # for notify-send
 sudo apt install dunst           # optional fallback
-sudo apt install wmctrl xdotool  # optional window focus
 ```
 
 ---
@@ -85,13 +82,10 @@ hermes plugins enable hermes-linux-notify
 
 ## Configuration / Configuración
 
-You can customize the notification message, urgency, and expire time by editing `notify.py`.
-*Puedes personalizar el mensaje, urgencia y tiempo de expiración editando `notify.py`.*
-
-Default values:
-*Valores predeterminados:*
-- `urgency="normal"`
-- `expire=5000` (milliseconds / milisegundos)
+The notification text and fallback behavior are hardcoded. To change the message or
+timeouts, edit the constants in `__init__.py` and `notify.py` directly.
+*El texto de la notificación y el comportamiento de fallback están fijos. Para cambiar
+el mensaje o los tiempos, edita las constantes en `__init__.py` y `notify.py` directamente.*
 
 ---
 

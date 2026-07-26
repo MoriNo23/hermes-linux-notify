@@ -17,7 +17,7 @@ def _on_post_llm_call(*, platform: str = "", **kwargs: object) -> None:
         return
 
     term_name = detect_terminal_name()
-    title = "Hermes ✅"
+    title = "Hermes"
     message = "Listo para tu input"
     if term_name:
         message += f" (terminal: {term_name})"
@@ -27,4 +27,3 @@ def _on_post_llm_call(*, platform: str = "", **kwargs: object) -> None:
 
 def register(ctx) -> None:
     ctx.register_hook("post_llm_call", _on_post_llm_call)
-    detect_terminal_name()
