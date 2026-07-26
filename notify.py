@@ -8,17 +8,6 @@ import sys
 logger = logging.getLogger(__name__)
 
 
-def _plasmashell_running() -> bool:
-    try:
-        r = subprocess.run(
-            ["pgrep", "-x", "plasmashell"],
-            capture_output=True, timeout=3,
-        )
-        return r.returncode == 0
-    except Exception:
-        return False
-
-
 def _notify_send(
     title: str,
     message: str,
@@ -62,9 +51,6 @@ def _echo_to_stderr(title: str, message: str) -> None:
 def send_notification(title: str, message: str) -> None:
     if _notify_send(title, message):
         return
-
-    plasma = _plasmashell_running()
-    logger.debug("plasmashell running=%s", plasma)
 
     if _dunstify(title, message):
         return

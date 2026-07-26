@@ -2,7 +2,6 @@ from __future__ import annotations
 
 import logging
 import os
-import shutil
 import subprocess
 
 logger = logging.getLogger(__name__)
@@ -66,32 +65,3 @@ def detect_terminal_name() -> str | None:
         logger.debug("linux-notify: terminal detection failed", exc_info=True)
 
     return None
-
-
-def focus_terminal_window(term_name: str | None) -> None:
-    if term_name is None:
-        return
-    wmctrl = shutil.which("wmctrl")
-    if wmctrl:
-        try:
-            subprocess.run(
-                [wmctrl, "-a", term_name],
-                capture_output=True, timeout=3,
-            )
-        except Exception:
-            pass
-    xdotool = shutil.which("xdotool")
-    if xdotool:
-        try:
-            result = subprocess.run(
-                [xdotool, "search", "--name", term_name],
-                capture_output=True, text=True, timeout=3,
-            )
-            if result.returncode == 0 and result.stdout.strip():
-                for wid in result.stdout.strip().split():
-                    subprocess.run(
-                        [xdotool, "windowactivate", wid],
-                        capture_output=True, timeout=3,
-                    )
-        except Exception:
-            pass
