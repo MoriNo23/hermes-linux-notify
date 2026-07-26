@@ -1,0 +1,7 @@
+name: hermes-linux-notify
+version: "1.0.0"
+description: "Linux desktop notification when Hermes CLI finishes responding. Fallback chain: notify-send → dunstify → terminal echo."
+author: opencode
+kind: standalone
+hooks:
+  - post_llm_call
