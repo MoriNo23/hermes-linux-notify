@@ -13,6 +13,8 @@
   *Detecta tu emulador de terminal (Warp, GNOME Terminal, Konsole, Kitty, etc.)*
 - 🔄 Fallback chain: `notify-send` → `dunstify` → stderr
   *Cadena de fallback: `notify-send` → `dunstify` → stderr*
+- 🔊 Plays a short key-click sound on each notification
+  *Reproduce un sonido corto de tecla en cada notificación*
 - 🛡️ Works with KDE Plasma, GNOME, XFCE, and any desktop that supports `notify-send`
   *Funciona con KDE Plasma, GNOME, XFCE y cualquier escritorio que soporte `notify-send`*
 
@@ -25,12 +27,15 @@
 - One of these notification daemons:
   - `libnotify` (`notify-send`) – works with GNOME, KDE, XFCE, etc.
   - `dunst` – lightweight notification daemon (optional fallback)
+- A sound player for the key-click:
+  - `paplay` (PulseAudio) or `aplay` (ALSA)
 
 ### Install dependencies / Instalar dependencias
 ```bash
 # Debian/Ubuntu / Debian-based
 sudo apt install libnotify-bin   # for notify-send
 sudo apt install dunst           # optional fallback
+sudo apt install pulseaudio-utils  # for paplay (or alsa-utils for aplay)
 ```
 
 ---
