@@ -9,10 +9,18 @@
 
 - 🔔 Desktop notification when Hermes finishes a response
   *Notificación de escritorio cuando Hermes termina una respuesta*
+- ❓ Desktop notification when Hermes asks you a question (clarify)
+  *Notificación cuando Hermes te hace una pregunta (clarify)*
+- ⚠️ Desktop notification when your confirmation is required
+  *Notificación cuando se requiere tu confirmación*
+- 🏷️ Shows the real session title in the notification
+  *Muestra el título real de la sesión en la notificación*
 - 🖥️ Detects your terminal emulator (Warp, GNOME Terminal, Konsole, Kitty, etc.)
   *Detecta tu emulador de terminal (Warp, GNOME Terminal, Konsole, Kitty, etc.)*
-- 🔄 Fallback chain: `notify-send` → `dunstify` → stderr
-  *Cadena de fallback: `notify-send` → `dunstify` → stderr*
+- 🖼️ Shows the bundled app icon (128×128) on each notification
+  *Muestra el icono de la app (128×128) en la notificación*
+- 🔄 Uses the native system notifier via `notify-send` → stderr fallback
+  *Usa el notificador nativo del sistema vía `notify-send` → stderr*
 - 🔊 Plays a short key-click sound on each notification
   *Reproduce un sonido corto de tecla en cada notificación*
 - 🛡️ Works with KDE Plasma, GNOME, XFCE, and any desktop that supports `notify-send`
@@ -76,11 +84,9 @@ hermes plugins enable hermes-linux-notify
 
 ## Fallback Chain / Cadena de fallback
 
-1. **`notify-send`** – primary (works with any D-Bus notification daemon)
-   *principal (funciona con cualquier demonio de notificaciones D-Bus)*
-2. **`dunstify`** – if `dunst` is installed and `notify-send` fails
-   *si `dunst` está instalado y `notify-send` falla*
-3. **stderr** – last resort, prints to terminal
+1. **`notify-send`** – the native system notifier (works with any D-Bus daemon: KDE, GNOME, XFCE, etc.)
+   *el notificador nativo (funciona con cualquier daemon D-Bus: KDE, GNOME, XFCE, etc.)*
+2. **stderr** – fallback, prints to terminal
    *último recurso, imprime en la terminal*
 
 ---
@@ -92,16 +98,31 @@ timeouts, edit the constants in `__init__.py` and `notify.py` directly.
 *El texto de la notificación y el comportamiento de fallback están fijos. Para cambiar
 el mensaje o los tiempos, edita las constantes en `__init__.py` y `notify.py` directamente.*
 
-The key-click sound is configured via the optional `config` block in `plugin.yaml`:
+The key-click sound, icon, and which notifications to send are configured via the
+optional `config` block in `plugin.yaml`:
 
-*El sonido de tecla se configura con el bloque opcional `config` en `plugin.yaml`:*
+*El sonido, el icono y qué notificaciones enviar se configuran con el bloque
+opcional `config` en `plugin.yaml`:*
 
 ```yaml
 config:
-  sound_enabled: true     # false disables the key-click
-  sound_path: ""          # empty = bundled sounds/keyclick.wav; or ~/ruta/click.wav
-  sound_volume: 100       # 0-100, only applied when using paplay
+  sound_enabled: true      # false disables the key-click
+  sound_path: ""           # empty = bundled sounds/keyclick.wav; or ~/ruta/click.wav
+  sound_volume: 100        # 0-100, only applied when using paplay
+  icon_path: ""            # empty = bundled assets/icon-128.png; or ~/ruta/icono.png
+  notify_question: true    # false disables the "Hermes asks" notification (clarify)
+  notify_approval: true    # false disables the "confirmation required" notification
 ```
+
+### Icon / Icono
+
+The bundled icon is `assets/icon-128.png` (128×128). Manage desktops scale it well
+on HiDPI. If you make your own, use a **128×128 PNG** (or an SVG source exported to
+128×128 PNG) — big enough to stay crisp, small enough to load instantly.
+
+*El icono incluido es `assets/icon-128.png` (128×128). Si querés el tuyo, usá un
+PNG de **128×128** (o SVG con export a PNG 128×128) — nítido en HiDPI y de carga
+rápida.*
 
 If no audio player (`paplay`/`aplay`) is found, the plugin emits a terminal bell
 (`\a`) as fallback. The sound plays on a background thread so it never delays the
@@ -129,10 +150,20 @@ notificación.*
 
 ```
 ~/.hermes/plugins/hermes-linux-notify/
-├── plugin.yaml       # plugin manifest / manifiesto
-├── __init__.py       # hook registration / registro del hook
-├── notify.py         # notification logic / lógica de notificación
-└── terminal.py       # terminal detection / detección de terminal
+├── plugin.yaml          # plugin manifest / manifiesto
+├── __init__.py          # Hermes entry: re-exports register / entrypoint del plugin
+├── pytest.ini           # pytest config (import-mode=importlib)
+├── notify_pkg/          # plugin logic / lógica del plugin
+│   ├── __init__.py      # register() + hooks
+│   ├── notify.py        # notification logic / lógica de notificación
+│   ├── session.py       # session title lookup / título de sesión
+│   └── terminal.py      # terminal detection / detección de terminal
+├── tests/
+│   ├── conftest.py
+│   └── test_session.py
+└── assets/
+    ├── icon-128.png            # notification icon (128×128) / icono de notificación
+    └── icon-original-1024.png  # source image / imagen fuente (1024×1024)
 ```
 
 ---

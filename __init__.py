@@ -1,29 +1,21 @@
 from __future__ import annotations
 
-import logging
-import sys
+# Hermes loads this file as `hermes_plugins.<slug>` with submodule_search_locations
+# pointing at the plugin dir, so RELATIVE imports resolve. All real logic lives in
+# the `notify_pkg` subpackage; this file only re-exports `register`.
+#
+# The subpackage is deliberately NOT named `hermes_linux_notify` — the plugin
+# dir name (`hermes-linux-notify`) slugifies to exactly that, which would collide
+# with pytest's package inference. `notify_pkg` avoids the collision.
+#
+# It is also import-safe standalone: if loaded without a parent package (pytest
+# importing the repo root as a bare module), it falls back to an absolute import
+# so tests can reach the package too. In runtime the relative path is used.
+try:
+    from . import notify_pkg as _impl
+except ImportError:  # no parent package (e.g. pytest standalone import)
+    import notify_pkg as _impl
 
-from .notify import send_notification
-from .terminal import detect_terminal_name
+register = _impl.register
 
-logger = logging.getLogger(__name__)
-
-
-def _on_post_llm_call(*, platform: str = "", **kwargs: object) -> None:
-    if platform != "cli":
-        return
-
-    if not sys.stdout.isatty():
-        return
-
-    term_name = detect_terminal_name()
-    title = "Hermes"
-    message = "Listo para tu input"
-    if term_name:
-        message += f" (terminal: {term_name})"
-
-    send_notification(title, message)
-
-
-def register(ctx) -> None:
-    ctx.register_hook("post_llm_call", _on_post_llm_call)
+__all__ = ["register"]

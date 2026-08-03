@@ -1,13 +1,18 @@
 name: hermes-linux-notify
 version: "1.0.0"
-description: "Linux desktop notification when Hermes CLI finishes responding. Fallback chain: notify-send → dunstify → terminal echo."
+description: "Linux desktop notification when Hermes CLI finishes responding, asks a question, or needs confirmation. Uses the native notifier via notify-send → stderr fallback."
 author: opencode
 kind: standalone
 hooks:
   - post_llm_call
+  - pre_tool_call
+  - pre_approval_request
 
 # Optional config (read by the plugin itself, ignored by Hermes core)
 config:
   sound_enabled: true        # set false to disable the key-click
   sound_path: ""              # empty = use bundled sounds/keyclick.wav
   sound_volume: 100           # 0-100, applied only with paplay
+  icon_path: ""               # empty = use bundled assets/icon-128.png
+  notify_question: true       # notify when the model asks a question (clarify)
+  notify_approval: true       # notify when user confirmation is required
