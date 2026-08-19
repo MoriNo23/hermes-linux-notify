@@ -1,23 +1,23 @@
 # hermes-linux-notify
 
-Plugin de notificaciones de escritorio para el agente Hermes en Linux.
+A desktop notification plugin for the Hermes CLI agent on Linux.
 
-## Qué hace
+## What it does
 
-El plugin muestra una notificación de escritorio cuando:
+The plugin shows a desktop notification when:
 
-- Hermes termina de responder.
-- Hermes hace una pregunta (usa la herramienta `clarify`).
-- Hermes necesita tu confirmación para ejecutar un comando.
+- Hermes finishes a response.
+- Hermes asks a question (via the `clarify` tool).
+- Hermes needs your confirmation to run a command.
 
-## Requisitos
+## Requirements
 
-- Linux con un daemon de notificaciones (GNOME, KDE, XFCE, dunst, entre otros).
-- Python 3.8 o superior.
-- Hermes CLI instalado.
-- `dbus-fast` en el entorno de Hermes para el cierre automático. Sin él, el plugin usa `notify-send` como respaldo.
+- Linux with a notification daemon (GNOME, KDE, XFCE, dunst, and others).
+- Python 3.8 or newer.
+- Hermes CLI installed.
+- `dbus-fast` in the Hermes environment for automatic closing. Without it, the plugin falls back to `notify-send`.
 
-## Instalación
+## Installation
 
 ```
 cd ~/.hermes/plugins
@@ -25,36 +25,36 @@ git clone https://github.com/MoriNo23/hermes-linux-notify
 hermes plugins enable hermes-linux-notify
 ```
 
-Reinicia Hermes por completo (no basta con `/reset`) para que cargue el plugin.
+Restart Hermes completely (a `/reset` is not enough) so the plugin loads.
 
-## Cómo funciona
+## How it works
 
-El plugin registra hooks en Hermes:
+The plugin registers hooks in Hermes:
 
-- `post_llm_call`: avisa que la respuesta está lista.
-- `pre_tool_call` (solo `clarify`): avisa que Hermes pregunta.
-- `pre_approval_request`: avisa que se requiere confirmación.
-- `post_tool_call` / `post_approval_response`: cierran la notificación cuando respondes o confirmas.
+- `post_llm_call`: reports that the response is ready.
+- `pre_tool_call` (only `clarify`): reports that Hermes is asking.
+- `pre_approval_request`: reports that confirmation is required.
+- `post_tool_call` / `post_approval_response`: close the notification once you answer or confirm.
 
-Las notificaciones se entregan por D-Bus (`org.freedesktop.Notifications`) con `dbus_fast`. Si no está disponible, se usa `notify-send`.
+Notifications are delivered over D-Bus (`org.freedesktop.Notifications`) with `dbus_fast`. If that is unavailable, `notify-send` is used instead.
 
-El título de la notificación es `Hermes - <sesión>`. El cuerpo muestra la pregunta, la descripción del comando o el aviso correspondiente.
+The notification title is `Hermes - <session>`. The body shows the question, the command description, or the relevant notice.
 
-## Configuración
+## Configuration
 
-El archivo `plugin.yaml` admite estas opciones:
+The `plugin.yaml` file accepts these options:
 
-- `sound_enabled`: reproduce un sonido al notificar.
-- `sound_path`: ruta del sonido (por defecto el incluido).
-- `sound_volume`: volumen para `paplay`.
-- `icon_path`: icono personalizado.
-- `notify_question` / `notify_approval`: activan o desactivan cada tipo de aviso.
+- `sound_enabled`: play a sound when notifying.
+- `sound_path`: path to the sound (defaults to the bundled one).
+- `sound_volume`: volume for `paplay`.
+- `icon_path`: a custom icon.
+- `notify_question` / `notify_approval`: toggle each kind of notice.
 
-## Notas
+## Notes
 
-- Las notificaciones son persistentes: se cierran solas cuando interactúas.
-- El espejo del dashboard es opcional y usa la variable `HERMES_NOTIFY_MIRROR`.
+- Notifications persist until you interact with them, then close on their own.
+- The dashboard mirror is optional and uses the `HERMES_NOTIFY_MIRROR` variable.
 
-## Licencia
+## License
 
 MIT
