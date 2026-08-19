@@ -7,6 +7,8 @@ hooks:
   - post_llm_call
   - pre_tool_call
   - pre_approval_request
+  - post_tool_call
+  - post_approval_response
 
 # Optional config (read by the plugin itself, ignored by Hermes core)
 config:
@@ -16,3 +18,8 @@ config:
   icon_path: ""               # empty = use bundled assets/icon-128.png
   notify_question: true       # notify when the model asks a question (clarify)
   notify_approval: true       # notify when user confirmation is required
+
+# Visual-testing mirror (optional, NOT read by Hermes core):
+# If HERMES_NOTIFY_MIRROR is set in the environment (e.g. http://localhost:8787/mirror),
+# every notification is also POSTed to that URL as JSON for the Node dashboard.
+# Unset = no mirror, zero overhead. See dashboard/README.md.

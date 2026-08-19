@@ -6,6 +6,11 @@ import shutil
 import subprocess
 import sys
 import threading
+import json
+import urllib.request
+import urllib.error
+
+from . import dbus_notify
 
 logger = logging.getLogger(__name__)
 
@@ -80,7 +85,7 @@ def _run_notifier(
     icon: str | None = None,
     app_name: str = "Hermes",
     urgency: str = "normal",
-    expire: int = 5000,
+    expire: int = 0,
 ) -> bool:
     if not shutil.which(binary):
         return False
@@ -95,6 +100,57 @@ def _run_notifier(
         return False
 
 
+_MIRROR_URL = os.environ.get("HERMES_NOTIFY_MIRROR", "").strip()
+
+
+def _mirror_notification(
+    *,
+    title: str,
+    message: str,
+    icon: str | None,
+    app_name: str,
+    urgency: str,
+    expire: int,
+    source: str,
+) -> None:
+    """Best-effort mirror of the notification to a local dashboard for visual testing.
+
+    Gated by the HERMES_NOTIFY_MIRROR env var. Runs off the hot path in a daemon
+    thread; any failure is swallowed so production notifications are unaffected.
+    """
+    if not _MIRROR_URL:
+        return
+
+    payload = {
+        "title": title,
+        "message": message,
+        "icon": icon,
+        "app_name": app_name,
+        "urgency": urgency,
+        "expire": expire,
+        "source": source,
+    }
+    try:
+        data = json.dumps(payload).encode("utf-8")
+    except Exception:
+        logger.debug("notify mirror encode failed", exc_info=True)
+        return
+
+    def _post() -> None:
+        try:
+            req = urllib.request.Request(
+                _MIRROR_URL,
+                data=data,
+                headers={"Content-Type": "application/json"},
+                method="POST",
+            )
+            urllib.request.urlopen(req, timeout=2)
+        except Exception:
+            logger.debug("notify mirror post failed", exc_info=True)
+
+    threading.Thread(target=_post, daemon=True).start()
+
+
 def _echo_to_stderr(title: str, message: str) -> None:
     print(f"[hermes-linux-notify] {title}: {message}", file=sys.stderr)
 
@@ -105,14 +161,44 @@ def send_notification(
     icon: str | None = None,
     app_name: str = "Hermes",
     urgency: str = "normal",
-    expire: int = 5000,
-) -> None:
+    expire: int = 0,
+    source: str = "",
+) -> int | None:
+    """Send a desktop notification. Returns the D-Bus notification id when the
+    D-Bus path is used (so callers can auto-close it), else None."""
     threading.Thread(target=_play_keyclick, daemon=True).start()
 
     if icon is None:
         icon = _icon_path()
 
+    _mirror_notification(
+        title=title,
+        message=message,
+        icon=icon,
+        app_name=app_name,
+        urgency=urgency,
+        expire=expire,
+        source=source,
+    )
+
+    notif_id = dbus_notify.notify(
+        app_name=app_name,
+        icon=icon or "",
+        summary=title,
+        body=message,
+        urgency=urgency,
+        expire=expire,
+    )
+    if notif_id is not None:
+        return notif_id
+
     if _run_notifier("notify-send", title, message, icon=icon, app_name=app_name, urgency=urgency, expire=expire):
-        return
+        return None
 
     _echo_to_stderr(title, message)
+    return None
+
+
+def close_notification(notif_id: int) -> None:
+    """Auto-close a previously sent notification by its D-Bus id."""
+    dbus_notify.close(notif_id)
