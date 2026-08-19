@@ -1,184 +1,60 @@
 # hermes-linux-notify
 
-**Linux desktop notification plugin for Hermes CLI agent**
-*Plugin de notificaciones de escritorio para el agente Hermes en Linux*
+Plugin de notificaciones de escritorio para el agente Hermes en Linux.
 
----
+## Qué hace
 
-## Features / Características
+El plugin muestra una notificación de escritorio cuando:
 
-- 🔔 Desktop notification when Hermes finishes a response
-  *Notificación de escritorio cuando Hermes termina una respuesta*
-- ❓ Desktop notification when Hermes asks you a question (clarify)
-  *Notificación cuando Hermes te hace una pregunta (clarify)*
-- ⚠️ Desktop notification when your confirmation is required
-  *Notificación cuando se requiere tu confirmación*
-- 🏷️ Shows the real session title in the notification
-  *Muestra el título real de la sesión en la notificación*
-- 🖥️ Detects your terminal emulator (Warp, GNOME Terminal, Konsole, Kitty, etc.)
-  *Detecta tu emulador de terminal (Warp, GNOME Terminal, Konsole, Kitty, etc.)*
-- 🖼️ Shows the bundled app icon (128×128) on each notification
-  *Muestra el icono de la app (128×128) en la notificación*
-- 🔄 Uses the native system notifier via `notify-send` → stderr fallback
-  *Usa el notificador nativo del sistema vía `notify-send` → stderr*
-- 🔊 Plays a short key-click sound on each notification
-  *Reproduce un sonido corto de tecla en cada notificación*
-- 🛡️ Works with KDE Plasma, GNOME, XFCE, and any desktop that supports `notify-send`
-  *Funciona con KDE Plasma, GNOME, XFCE y cualquier escritorio que soporte `notify-send`*
+- Hermes termina de responder.
+- Hermes hace una pregunta (usa la herramienta `clarify`).
+- Hermes necesita tu confirmación para ejecutar un comando.
 
----
+## Requisitos
 
-## Requirements / Requisitos
+- Linux con un daemon de notificaciones (GNOME, KDE, XFCE, dunst, entre otros).
+- Python 3.8 o superior.
+- Hermes CLI instalado.
+- `dbus-fast` en el entorno de Hermes para el cierre automático. Sin él, el plugin usa `notify-send` como respaldo.
 
-- Python 3.8+
-- Hermes CLI agent installed
-- One of these notification daemons:
-  - `libnotify` (`notify-send`) – works with GNOME, KDE, XFCE, etc.
-  - `dunst` – lightweight notification daemon (optional fallback)
-- A sound player for the key-click:
-  - `paplay` (PulseAudio) or `aplay` (ALSA)
+## Instalación
 
-### Install dependencies / Instalar dependencias
-```bash
-# Debian/Ubuntu / Debian-based
-sudo apt install libnotify-bin   # for notify-send
-sudo apt install dunst           # optional fallback
-sudo apt install pulseaudio-utils  # for paplay (or alsa-utils for aplay)
 ```
-
----
-
-## Installation / Instalación
-
-### From GitHub (recommended) / Desde GitHub (recomendado)
-```bash
 cd ~/.hermes/plugins
 git clone https://github.com/MoriNo23/hermes-linux-notify
 hermes plugins enable hermes-linux-notify
 ```
 
-### Manual / Manual
-```bash
-# Copy to plugins directory
-cp -r /path/to/hermes-linux-notify ~/.hermes/plugins/
-hermes plugins enable hermes-linux-notify
-```
+Reinicia Hermes por completo (no basta con `/reset`) para que cargue el plugin.
 
----
+## Cómo funciona
 
-## Usage / Uso
+El plugin registra hooks en Hermes:
 
-1. Start a new Hermes session:
-   *Inicia una nueva sesión de Hermes:*
-   ```bash
-   hermes
-   ```
+- `post_llm_call`: avisa que la respuesta está lista.
+- `pre_tool_call` (solo `clarify`): avisa que Hermes pregunta.
+- `pre_approval_request`: avisa que se requiere confirmación.
+- `post_tool_call` / `post_approval_response`: cierran la notificación cuando respondes o confirmas.
 
-2. Send any prompt.
-   *Envía cualquier prompt.*
+Las notificaciones se entregan por D-Bus (`org.freedesktop.Notifications`) con `dbus_fast`. Si no está disponible, se usa `notify-send`.
 
-3. When Hermes finishes responding, you'll receive a desktop notification.
-   *Cuando Hermes termine de responder, recibirás una notificación de escritorio.*
+El título de la notificación es `Hermes - <sesión>`. El cuerpo muestra la pregunta, la descripción del comando o el aviso correspondiente.
 
----
+## Configuración
 
-## Fallback Chain / Cadena de fallback
+El archivo `plugin.yaml` admite estas opciones:
 
-1. **`notify-send`** – the native system notifier (works with any D-Bus daemon: KDE, GNOME, XFCE, etc.)
-   *el notificador nativo (funciona con cualquier daemon D-Bus: KDE, GNOME, XFCE, etc.)*
-2. **stderr** – fallback, prints to terminal
-   *último recurso, imprime en la terminal*
+- `sound_enabled`: reproduce un sonido al notificar.
+- `sound_path`: ruta del sonido (por defecto el incluido).
+- `sound_volume`: volumen para `paplay`.
+- `icon_path`: icono personalizado.
+- `notify_question` / `notify_approval`: activan o desactivan cada tipo de aviso.
 
----
+## Notas
 
-## Configuration / Configuración
+- Las notificaciones son persistentes: se cierran solas cuando interactúas.
+- El espejo del dashboard es opcional y usa la variable `HERMES_NOTIFY_MIRROR`.
 
-The notification text and fallback behavior are hardcoded. To change the message or
-timeouts, edit the constants in `__init__.py` and `notify.py` directly.
-*El texto de la notificación y el comportamiento de fallback están fijos. Para cambiar
-el mensaje o los tiempos, edita las constantes en `__init__.py` y `notify.py` directamente.*
-
-The key-click sound, icon, and which notifications to send are configured via the
-optional `config` block in `plugin.yaml`:
-
-*El sonido, el icono y qué notificaciones enviar se configuran con el bloque
-opcional `config` en `plugin.yaml`:*
-
-```yaml
-config:
-  sound_enabled: true      # false disables the key-click
-  sound_path: ""           # empty = bundled sounds/keyclick.wav; or ~/ruta/click.wav
-  sound_volume: 100        # 0-100, only applied when using paplay
-  icon_path: ""            # empty = bundled assets/icon-128.png; or ~/ruta/icono.png
-  notify_question: true    # false disables the "Hermes asks" notification (clarify)
-  notify_approval: true    # false disables the "confirmation required" notification
-```
-
-### Icon / Icono
-
-The bundled icon is `assets/icon-128.png` (128×128). Manage desktops scale it well
-on HiDPI. If you make your own, use a **128×128 PNG** (or an SVG source exported to
-128×128 PNG) — big enough to stay crisp, small enough to load instantly.
-
-*El icono incluido es `assets/icon-128.png` (128×128). Si querés el tuyo, usá un
-PNG de **128×128** (o SVG con export a PNG 128×128) — nítido en HiDPI y de carga
-rápida.*
-
-If no audio player (`paplay`/`aplay`) is found, the plugin emits a terminal bell
-(`\a`) as fallback. The sound plays on a background thread so it never delays the
-notification.
-*Si no hay reproductor (`paplay`/`aplay`), el plugin emite una campana de terminal
-(`\a`) como fallback. El sonido se reproduce en un hilo aparte y no retrasa la
-notificación.*
-
----
-
-## Troubleshooting / Solución de problemas
-
-**No notification appears / No aparece notificación**
-- Check if `notify-send` works: `notify-send "test" "hello"`
-- Check if `dunst` is running: `pgrep -x dunst`
-- If using KDE, ensure `plasmashell` is running: `pgrep -x plasmashell`
-
-**Plugin not loading / El plugin no se carga**
-- Verify it's enabled: `hermes plugins list`
-- Restart Hermes completely (not just `/reset`)
-
----
-
-## Files / Archivos
-
-```
-~/.hermes/plugins/hermes-linux-notify/
-├── plugin.yaml          # plugin manifest / manifiesto
-├── __init__.py          # Hermes entry: re-exports register / entrypoint del plugin
-├── pytest.ini           # pytest config (import-mode=importlib)
-├── notify_pkg/          # plugin logic / lógica del plugin
-│   ├── __init__.py      # register() + hooks
-│   ├── notify.py        # notification logic / lógica de notificación
-│   ├── session.py       # session title lookup / título de sesión
-│   └── terminal.py      # terminal detection / detección de terminal
-├── tests/
-│   ├── conftest.py
-│   └── test_session.py
-└── assets/
-    ├── icon-128.png            # notification icon (128×128) / icono de notificación
-    └── icon-original-1024.png  # source image / imagen fuente (1024×1024)
-```
-
----
-
-## License / Licencia
+## Licencia
 
 MIT
-
----
-
-## Author / Autor
-
-[MoriNo23](https://github.com/MoriNo23)
-
----
-
-*Inspired by / Inspirado en:*
-[konyu/hermes-macos-notify](https://github.com/konyu/hermes-macos-notify)
